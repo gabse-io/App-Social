@@ -123,7 +123,7 @@ export default function CampaignDetailPage() {
               />
               <div className="flex gap-2">
                 <Button type="submit">Agregar</Button>
-                <Button type="button" variant="secondary" onClick={() => setShowAddProduct(false)}>
+                <Button type="button" variant="outline" onClick={() => setShowAddProduct(false)}>
                   Cancelar
                 </Button>
               </div>
