@@ -192,15 +192,17 @@ export default function NewOrderPage() {
           <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#1e2f3e', marginBottom: 16 }}>Paso 1: Selecciona una campaña</h2>
           {projects.length === 0 ? (
             <Card>
-              <CardContent style={{ padding: 40, textAlign: 'center' }}>
-                <p style={{ color: '#5f7f9e' }}>No tienes campañas habilitadas. Contacta al administrador.</p>
+              <CardContent>
+                <div style={{ padding: 40, textAlign: 'center' }}>
+                  <p style={{ color: '#5f7f9e' }}>No tienes campañas habilitadas. Contacta al administrador.</p>
+                </div>
               </CardContent>
             </Card>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {projects.map((project) => (
-                <Card key={project.id} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
-                  <CardContent style={{ padding: 20 }}>
+                <Card key={project.id} className="project-card">
+                  <CardContent>
                     <button
                       onClick={() => handleSelectProject(project)}
                       style={{ 
@@ -471,17 +473,24 @@ export default function NewOrderPage() {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
+        .project-card {
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .project-card > div {
+          padding: 20px;
+        }
         .order-step-header {
           display: flex;
-          justifyContent: space-between;
-          alignItems: center;
-          marginBottom: 16px;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16px;
           flex-wrap: wrap;
           gap: 12px;
         }
         .order-step-title {
-          fontSize: 1.1rem;
-          fontWeight: 600;
+          font-size: 1.1rem;
+          font-weight: 600;
           color: #1e2f3e;
           margin: 0;
         }
@@ -490,12 +499,12 @@ export default function NewOrderPage() {
           border: 2px solid #e0edf9;
           color: #5f7f9e;
           padding: 10px 20px;
-          borderRadius: 40px;
-          fontWeight: 600;
-          fontSize: 0.9rem;
+          border-radius: 40px;
+          font-weight: 600;
+          font-size: 0.9rem;
           cursor: pointer;
           display: inline-flex;
-          alignItems: center;
+          align-items: center;
           gap: 8px;
         }
         @media (max-width: 480px) {
@@ -505,7 +514,7 @@ export default function NewOrderPage() {
           }
           .order-step-back-btn {
             padding: 8px 16px;
-            fontSize: 0.85rem;
+            font-size: 0.85rem;
           }
         }
       `}</style>
