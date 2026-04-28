@@ -1,0 +1,250 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #1a73e8;
+  --primary-dark: #0e5fc9;
+  --primary-hover: #1557b0;
+  --background: #f5f9ff;
+  --background-gradient: linear-gradient(to bottom right, #f5f9ff, #e8f0fe);
+  --surface: #ffffff;
+  --surface-alt: #fafcff;
+  --text: #1e2f3e;
+  --text-secondary: #5f7f9e;
+  --text-muted: #4a7c9c;
+  --border: #e0edf9;
+  --border-light: #e2edfc;
+  --border-card: #eef3fc;
+  --success: #2e7d32;
+  --success-bg: #c8e6d9;
+  --success-text: #1e5a2f;
+  --warning: #ed6c02;
+  --warning-bg: #fff3e0;
+  --warning-text: #c97e00;
+  --danger: #d46b5e;
+  --danger-bg: #ffe0db;
+  --danger-text: #b85c4a;
+  --info: #1a5b8d;
+  --info-bg: #d9e6f5;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--background);
+  color: var(--text);
+  font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
+  padding: 16px 12px 40px;
+}
+
+.app-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Tabs modernos */
+.tabs-modern {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  background: white;
+  border-radius: 48px;
+  padding: 6px;
+  flex-wrap: wrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.tab-btn {
+  border: none;
+  background: transparent;
+  padding: 8px 18px;
+  border-radius: 40px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #3b6e9e;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tab-btn.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 10px rgba(26, 115, 232, 0.25);
+}
+
+.panel {
+  background: white;
+  border-radius: 32px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  padding: 20px 18px;
+}
+
+/* Stats */
+.stats-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  background: var(--surface-alt);
+  border-radius: 24px;
+  padding: 16px 12px;
+  flex: 1 1 130px;
+  border: 1px solid var(--border-light);
+}
+
+.stat-icon {
+  font-size: 1.8rem;
+  color: var(--primary);
+}
+
+.stat-number {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.card {
+  background: white;
+  border-radius: 28px;
+  padding: 18px 16px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border-card);
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.form-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.input-group {
+  flex: 1;
+  min-width: 140px;
+}
+
+.input-group label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 5px;
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 40px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.status-paid {
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.status-unpaid {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+.status-delivered {
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.status-pending {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+}
+
+.search-box {
+  background: #f8fbfe;
+  border-radius: 60px;
+  padding: 4px 4px 4px 16px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.search-box input {
+  border: none;
+  background: transparent;
+  padding: 10px 0;
+}
+
+@media (max-width: 650px) {
+  .stats-grid {
+    gap: 10px;
+  }
+  .stat-card {
+    min-width: 110px;
+  }
+  .tab-btn {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+}
+
+@layer utilities {
+  .text-primary {
+    color: var(--primary);
+  }
+  .bg-primary {
+    background-color: var(--primary);
+  }
+  .border-primary {
+    border-color: var(--primary);
+  }
+  .rounded-20 {
+    border-radius: 20px;
+  }
+  .rounded-24 {
+    border-radius: 24px;
+  }
+  .rounded-28 {
+    border-radius: 28px;
+  }
+  .rounded-32 {
+    border-radius: 32px;
+  }
+  .rounded-40 {
+    border-radius: 40px;
+  }
+  .rounded-48 {
+    border-radius: 48px;
+  }
+  .rounded-60 {
+    border-radius: 60px;
+  }
+}
