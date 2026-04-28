@@ -105,7 +105,7 @@ export default function ParentsPage() {
               />
               <div className="flex gap-2">
                 <Button type="submit">Guardar</Button>
-                <Button type="button" variant="secondary" onClick={() => setShowAddForm(false)}>
+                <Button type="button" variant="outline" onClick={() => setShowAddForm(false)}>
                   Cancelar
                 </Button>
               </div>

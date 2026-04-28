@@ -140,10 +140,10 @@ export default function DeliveriesPage() {
       {filteredOrders.length > 0 && (
         <>
           <div className="flex gap-2">
-            <Button variant="secondary" onClick={handleMarkAllPaid}>
+            <Button variant="outline" onClick={handleMarkAllPaid}>
               Marcar todos como pagados
             </Button>
-            <Button variant="secondary" onClick={handleMarkAllDelivered}>
+            <Button variant="outline" onClick={handleMarkAllDelivered}>
               Marcar todos como entregados
             </Button>
           </div>

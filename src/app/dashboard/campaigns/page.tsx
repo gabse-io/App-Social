@@ -152,7 +152,7 @@ export default function CampaignsPage() {
               />
               <div className="flex gap-2">
                 <Button type="submit">Crear</Button>
-                <Button type="button" variant="secondary" onClick={() => setShowAddForm(false)}>
+                <Button type="button" variant="outline" onClick={() => setShowAddForm(false)}>
                   Cancelar
                 </Button>
               </div>
@@ -184,7 +184,7 @@ export default function CampaignsPage() {
               </div>
               <div className="flex gap-2">
                 <Button onClick={handleSaveParents}>Guardar</Button>
-                <Button variant="secondary" onClick={() => {
+                <Button variant="outline" onClick={() => {
                   setShowEditForm(false)
                   setSelectedProject(null)
                   setSelectedParents([])
@@ -220,7 +220,7 @@ export default function CampaignsPage() {
                     </p>
                   </div>
                   <div className="flex gap-2 pt-2">
-                    <Button size="sm" variant="secondary" onClick={() => handleEditProject(project)}>
+                    <Button size="sm" variant="outline" onClick={() => handleEditProject(project)}>
                       Editar Padres
                     </Button>
                     <Button size="sm" variant="danger" onClick={() => handleDeleteProject(project.id, project.name)}>

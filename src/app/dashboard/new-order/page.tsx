@@ -230,7 +230,7 @@ export default function NewOrderPage() {
                     <div className="flex items-center gap-2">
                       <Button
                         size="sm"
-                        variant="secondary"
+                        variant="outline"
                         onClick={() => handleQuantityChange(item.productId, -1)}
                         disabled={item.quantity === 0}
                       >
@@ -239,7 +239,7 @@ export default function NewOrderPage() {
                       <span className="w-8 text-center font-medium">{item.quantity}</span>
                       <Button
                         size="sm"
-                        variant="secondary"
+                        variant="outline"
                         onClick={() => handleQuantityChange(item.productId, 1)}
                       >
                         +
