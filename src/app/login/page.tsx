@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/providers'
 import { signIn, isParentActive, signOut, getCurrentProfile } from '@/lib/auth'
 import { Footer } from '@/components/footer'
 
-function LoginForm() {
+export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user } = useAuth()
@@ -70,6 +70,30 @@ function LoginForm() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #e8f0fe 0%, #d4e4fc 100%)'
+      }}>
+        <div style={{ 
+          background: 'white', 
+          borderRadius: '48px', 
+          padding: '40px 32px',
+          boxShadow: '0 25px 45px -12px rgba(0, 0, 0, 0.2)'
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <i className="fas fa-spinner fa-pulse" style={{ fontSize: '32px', color: '#1a73e8' }}></i>
+            <p style={{ marginTop: '16px', color: '#5f7f9e' }}>Cargando...</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -295,33 +319,5 @@ function LoginForm() {
         </div>
       </div>
     </div>
-  )
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense fallback={
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #e8f0fe 0%, #d4e4fc 100%)'
-      }}>
-        <div style={{ 
-          background: 'white', 
-          borderRadius: '48px', 
-          padding: '40px 32px',
-          boxShadow: '0 25px 45px -12px rgba(0, 0, 0, 0.2)'
-        }}>
-          <div style={{ textAlign: 'center' }}>
-            <i className="fas fa-spinner fa-pulse" style={{ fontSize: '32px', color: '#1a73e8' }}></i>
-            <p style={{ marginTop: '16px', color: '#5f7f9e' }}>Cargando...</p>
-          </div>
-        </div>
-      </div>
-    }>
-      <LoginForm />
-    </Suspense>
   )
 }
