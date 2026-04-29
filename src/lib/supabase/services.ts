@@ -385,6 +385,9 @@ export async function searchOrdersByCustomer(searchTerm: string) {
     .select('*, products(*), projects(*), parents(*)')
     .ilike('customer_name', `%${searchTerm}%`)
     .order('customer_name')
+  
+  if (error) throw error
+  return data || []
 }
 
 export async function getOrderStats() {
