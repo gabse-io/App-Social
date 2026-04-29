@@ -197,7 +197,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <Suspense fallback={null}>
+          <Suspense fallback={<div style={{ minHeight: '0px' }}></div>}>
             <ErrorMessage />
           </Suspense>
 
