@@ -95,12 +95,12 @@ export default function MyOrdersPage() {
                         ${(order.price * order.quantity).toFixed(2)}
                       </td>
                       <td className="py-3 px-4">
-                        <Badge variant={order.payment_status === 'paid' ? 'success' : 'warning'}>
+                        <Badge variant={order.payment_status === 'paid' ? 'paid' : 'unpaid'}>
                           {order.payment_status === 'paid' ? 'Pagado' : 'Pendiente'}
                         </Badge>
                       </td>
                       <td className="py-3 px-4">
-                        <Badge variant={order.delivery_status === 'delivered' ? 'success' : 'warning'}>
+                        <Badge variant={order.delivery_status === 'delivered' ? 'delivered' : 'pending'}>
                           {order.delivery_status === 'delivered' ? 'Entregado' : 'Pendiente'}
                         </Badge>
                       </td>

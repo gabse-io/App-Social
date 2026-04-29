@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { updatePassword } from '@/lib/auth'
 import { Footer } from '@/components/footer'
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [password, setPassword] = useState('')
@@ -15,7 +15,6 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false)
 
   useEffect(() => {
-    // Verificar si hay el token de recuperación en la URL
     const accessToken = searchParams.get('access_token')
     const refreshToken = searchParams.get('refresh_token')
     
@@ -303,5 +302,35 @@ export default function ResetPasswordPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
+        background: 'linear-gradient(135deg, #e8f0fe 0%, #d4e4fc 100%)'
+      }}>
+        <div style={{ 
+          background: 'white', 
+          borderRadius: '48px', 
+          padding: '40px 32px',
+          boxShadow: '0 25px 45px -12px rgba(0, 0, 0, 0.2)'
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <i className="fas fa-spinner fa-pulse" style={{ fontSize: '32px', color: '#1a73e8' }}></i>
+            <p style={{ marginTop: '16px', color: '#5f7f9e' }}>Cargando...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   )
 }

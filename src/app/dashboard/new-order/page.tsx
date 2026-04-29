@@ -110,10 +110,12 @@ export default function NewOrderPage() {
         await createOrder(
           selectedProject.id,
           parentId,
-          item.productId,
-          item.productName,
-          item.price,
-          item.quantity,
+          [{
+            productId: item.productId,
+            productName: item.productName,
+            price: item.price,
+            quantity: item.quantity
+          }],
           customerName,
           generatePaymentLink
         )
@@ -195,7 +197,7 @@ export default function NewOrderPage() {
                           {project.products?.length || 0} productos disponibles
                         </p>
                       </div>
-                      <Badge variant="default">Seleccionar</Badge>
+                      <Badge variant="pending">Seleccionar</Badge>
                     </button>
                   </CardContent>
                 </Card>
