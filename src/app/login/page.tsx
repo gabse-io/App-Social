@@ -1,29 +1,77 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/providers'
 import { signIn, isParentActive, signOut, getCurrentProfile } from '@/lib/auth'
 import { Footer } from '@/components/footer'
 
+// Component that uses useSearchParams - must be wrapped in Suspense
+function ErrorMessage() {
+  const searchParams = useSearchParams()
+  const [message, setMessage] = useState('')
+
+  useEffect(() => {
+    const errorParam = searchParams.get('error')
+    if (errorParam === 'inactive') {
+      setMessage('Tu cuenta ha sido desactivada. Contacta al administrador.')
+    }
+  }, [searchParams])
+
+  if (!message) return null
+
+  return (
+    <div style={{
+      background: '#ffe8e6',
+      color: '#d46b5e',
+      padding: '12px 16px',
+      borderRadius: '28px',
+      fontSize: '0.75rem',
+      fontWeight: 500,
+      marginBottom: '20px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      borderLeft: '4px solid #d46b5e'
+    }}>
+      <i className="fas fa-exclamation-circle"></i>
+      <span>{message}</span>
+    </div>
+  )
+}
+
+// Loading fallback for Suspense
+function LoginLoading() {
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'linear-gradient(135deg, #e8f0fe 0%, #d4e4fc 100%)'
+    }}>
+      <div style={{ 
+        background: 'white', 
+        borderRadius: '48px', 
+        padding: '40px 32px',
+        boxShadow: '0 25px 45px -12px rgba(0, 0, 0, 0.2)'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <i className="fas fa-spinner fa-pulse" style={{ fontSize: '32px', color: '#1a73e8' }}></i>
+          <p style={{ marginTop: '16px', color: '#5f7f9e' }}>Cargando...</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function LoginPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState('')
-
-  const { profile } = useAuth()
-
-  useEffect(() => {
-    // Check for error query param
-    const errorParam = searchParams.get('error')
-    if (errorParam === 'inactive') {
-      setError('Tu cuenta ha sido desactivada. Contacta al administrador.')
-    }
-  }, [searchParams])
+  const [formError, setFormError] = useState('')
 
   useEffect(() => {
     if (user && profile) {
@@ -45,7 +93,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
+    setFormError('')
     setIsSubmitting(true)
 
     try {
@@ -58,7 +106,7 @@ export default function LoginPage() {
         if (!isActive) {
           // Cerrar sesión si el padre está inactivo
           await signOut()
-          setError('Tu cuenta ha sido desactivada. Contacta al administrador.')
+          setFormError('Tu cuenta ha sido desactivada. Contacta al administrador.')
           setIsSubmitting(false)
           return
         }
@@ -66,7 +114,7 @@ export default function LoginPage() {
 
       // El useEffect se encargará de redirigir según el rol
     } catch (err: any) {
-      setError(err.message || 'Error en la autenticación')
+      setFormError(err.message || 'Error en la autenticación')
     } finally {
       setIsSubmitting(false)
     }
@@ -149,7 +197,11 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {error && (
+          <Suspense fallback={null}>
+            <ErrorMessage />
+          </Suspense>
+
+          {formError && (
             <div style={{
               background: '#ffe8e6',
               color: '#d46b5e',
@@ -164,7 +216,7 @@ export default function LoginPage() {
               borderLeft: '4px solid #d46b5e'
             }}>
               <i className="fas fa-exclamation-circle"></i>
-              <span>{error}</span>
+              <span>{formError}</span>
             </div>
           )}
 
