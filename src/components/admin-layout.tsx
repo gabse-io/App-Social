@@ -355,8 +355,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </main>
 
-      {/* Password Change Modal - TEMPORALMENTE DESHABILITADO */}
-      {false && showPasswordModal && (
+      {/* Password Change Modal */}
+      {showPasswordModal && (
         <div style={{
           position: 'fixed',
           top: 0,

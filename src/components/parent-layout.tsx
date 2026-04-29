@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { Footer } from '@/components/footer'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { isParentActive, isAdminUser } from '@/lib/auth'
+import { isParentActive, isAdminUser, updatePassword } from '@/lib/auth'
 
 interface ParentLayoutProps {
   children: React.ReactNode
@@ -24,6 +24,14 @@ export function ParentLayout({ children }: ParentLayoutProps) {
   const [isActive, setIsActive] = useState(true)
   const [isAlsoAdmin, setIsAlsoAdmin] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  
+  // Estados para cambio de contraseña
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState(false)
 
   useEffect(() => {
     const checkParentStatus = async () => {
@@ -66,6 +74,38 @@ export function ParentLayout({ children }: ParentLayoutProps) {
   const handleSignOut = async () => {
     await signOut()
     router.push('/login')
+  }
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPasswordError('')
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Las contraseñas no coinciden')
+      return
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError('La contraseña debe tener al menos 6 caracteres')
+      return
+    }
+
+    setChangingPassword(true)
+
+    try {
+      await updatePassword(newPassword)
+      setPasswordSuccess(true)
+      setNewPassword('')
+      setConfirmPassword('')
+      setTimeout(() => {
+        setShowPasswordModal(false)
+        setPasswordSuccess(false)
+      }, 2000)
+    } catch (error: any) {
+      setPasswordError(error.message || 'Error al cambiar la contraseña')
+    } finally {
+      setChangingPassword(false)
+    }
   }
 
   return (
@@ -159,6 +199,34 @@ export function ParentLayout({ children }: ParentLayoutProps) {
               <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, color: '#1e2f3e' }}>{profile.name}</p>
               <p style={{ margin: 0, fontSize: '0.75rem', color: '#5f7f9e' }}>Padre/Apoderado</p>
             </div>
+            <button
+              onClick={() => setShowPasswordModal(true)}
+              style={{
+                padding: '8px 14px',
+                borderRadius: 8,
+                border: '1.5px solid #e2edfc',
+                background: 'white',
+                color: '#1a73e8',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#e8f0fe'
+                e.currentTarget.style.borderColor = '#1a73e8'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'white'
+                e.currentTarget.style.borderColor = '#e2edfc'
+              }}
+            >
+              <i className="fas fa-key"></i>
+              Cambiar Contraseña
+            </button>
             <button
               onClick={handleSignOut}
               style={{
@@ -261,6 +329,28 @@ export function ParentLayout({ children }: ParentLayoutProps) {
               <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600, color: '#1e2f3e' }}>{profile.name}</p>
               <p style={{ margin: 0, fontSize: '0.8rem', color: '#5f7f9e' }}>Padre/Apoderado</p>
             </div>
+
+            {/* Change Password Mobile */}
+            <button
+              onClick={() => { setMobileMenuOpen(false); setShowPasswordModal(true) }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '12px 16px',
+                borderRadius: 10,
+                border: 'none',
+                background: 'transparent',
+                color: '#1a73e8',
+                fontWeight: 600,
+                fontSize: '0.95rem',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
+            >
+              <i className="fas fa-key" style={{ width: 24, textAlign: 'center' }}></i>
+              Cambiar Contraseña
+            </button>
 
             {/* Sign Out Mobile */}
             <button
@@ -373,6 +463,167 @@ export function ParentLayout({ children }: ParentLayoutProps) {
           }
         }
       `}</style>
+
+      {/* Password Change Modal */}
+      {showPasswordModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '16px'
+        }} onClick={() => setShowPasswordModal(false)}>
+          <div style={{
+            background: 'white',
+            borderRadius: '24px',
+            padding: '32px',
+            width: '100%',
+            maxWidth: '400px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            maxHeight: '90vh',
+            overflow: 'auto'
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <div style={{
+                background: 'linear-gradient(135deg, #1a73e8, #0d5bbf)',
+                width: '56px',
+                height: '56px',
+                borderRadius: '20px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '16px'
+              }}>
+                <i className="fas fa-key" style={{ fontSize: '24px', color: 'white' }}></i>
+              </div>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1e2f3e', margin: 0 }}>
+                Cambiar Contraseña
+              </h2>
+              <p style={{ fontSize: '0.85rem', color: '#5f7f9e', margin: '8px 0 0 0' }}>
+                Ingresa tu nueva contraseña
+              </p>
+            </div>
+
+            {passwordSuccess ? (
+              <div style={{
+                background: '#e6f4ea',
+                color: '#1e8e3e',
+                padding: '16px',
+                borderRadius: '12px',
+                textAlign: 'center'
+              }}>
+                <i className="fas fa-check-circle" style={{ fontSize: '24px', marginBottom: '8px' }}></i>
+                <p style={{ margin: 0, fontWeight: 600 }}>Contraseña actualizada correctamente</p>
+              </div>
+            ) : (
+              <form onSubmit={handlePasswordChange}>
+                {passwordError && (
+                  <div style={{
+                    background: '#fce8e8',
+                    color: '#d93025',
+                    padding: '12px 16px',
+                    borderRadius: '12px',
+                    fontSize: '0.875rem',
+                    marginBottom: '16px'
+                  }}>
+                    <i className="fas fa-exclamation-circle" style={{ marginRight: '8px' }}></i>
+                    {passwordError}
+                  </div>
+                )}
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#1e2f3e', marginBottom: '6px' }}>
+                    Nueva Contraseña
+                  </label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    placeholder="Mínimo 6 caracteres"
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '12px',
+                      border: '1.5px solid #e2edfc',
+                      fontSize: '0.9rem',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#1e2f3e', marginBottom: '6px' }}>
+                    Confirmar Contraseña
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    placeholder="Repite la contraseña"
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '12px',
+                      border: '1.5px solid #e2edfc',
+                      fontSize: '0.9rem',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordModal(false)}
+                    disabled={changingPassword}
+                    style={{
+                      flex: 1,
+                      padding: '12px 20px',
+                      borderRadius: '12px',
+                      border: '1.5px solid #e2edfc',
+                      background: 'white',
+                      color: '#5f7f9e',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={changingPassword}
+                    style={{
+                      flex: 1,
+                      padding: '12px 20px',
+                      borderRadius: '12px',
+                      border: 'none',
+                      background: '#1a73e8',
+                      color: 'white',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      opacity: changingPassword ? 0.7 : 1
+                    }}
+                  >
+                    {changingPassword ? (
+                      <><i className="fas fa-spinner fa-spin" style={{ marginRight: '8px' }}></i>Guardando...</>
+                    ) : 'Guardar'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
