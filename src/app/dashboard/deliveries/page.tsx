@@ -153,7 +153,7 @@ export default function DeliveriesPage() {
               <CardHeader>
                 <CardTitle className="flex justify-between items-center">
                   <span>{customerName}</span>
-                  <Badge variant={customerOrders.some((o: any) => o.delivery_status === 'pending') ? 'warning' : 'success'}>
+                  <Badge variant={customerOrders.some((o: any) => o.delivery_status === 'pending') ? 'delivered' : 'delivered'}>
                     {customerOrders.some((o: any) => o.delivery_status === 'pending') ? 'Pendiente' : 'Completado'}
                   </Badge>
                 </CardTitle>
@@ -168,10 +168,10 @@ export default function DeliveriesPage() {
                           Cantidad: {order.quantity} | Total: ${(order.price * order.quantity).toFixed(2)}
                         </p>
                         <div className="flex gap-2 mt-2">
-                          <Badge variant={order.payment_status === 'paid' ? 'success' : 'warning'}>
+                          <Badge variant={order.payment_status === 'paid' ? 'paid' : 'unpaid'}>
                             {order.payment_status === 'paid' ? 'Pagado' : 'Pendiente'}
                           </Badge>
-                          <Badge variant={order.delivery_status === 'delivered' ? 'success' : 'warning'}>
+                          <Badge variant={order.delivery_status === 'delivered' ? 'delivered' : 'pending'}>
                             {order.delivery_status === 'delivered' ? 'Entregado' : 'Pendiente'}
                           </Badge>
                         </div>
@@ -215,7 +215,7 @@ export default function DeliveriesPage() {
               {pendingDeliveries.map(([customerName, orders]: [string, any[]]) => (
                 <div key={customerName} className="flex justify-between items-center p-3 border border-gray-200 rounded-lg">
                   <span className="font-medium">{customerName}</span>
-                  <Badge variant="warning">
+                  <Badge variant="pending">
                     {orders.filter((o: any) => o.delivery_status === 'pending').length} pendientes
                   </Badge>
                 </div>
