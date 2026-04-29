@@ -21,7 +21,7 @@ const sidebarItems = [
 ]
 
 export function AdminLayout({ children }: AdminLayoutProps) {
-  const { user, profile, signOut } = useAuth()
+  const { user, profile, signOut, loading } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
   const [showPasswordModal, setShowPasswordModal] = useState(false)
@@ -33,6 +33,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [changingPassword, setChangingPassword] = useState(false)
   const [isAlsoParent, setIsAlsoParent] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [loadTimeout, setLoadTimeout] = useState(false)
 
   useEffect(() => {
     const checkIfParent = async () => {
@@ -44,10 +45,31 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     checkIfParent()
   }, [profile])
 
+  // Timeout para evitar quedar colgado
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!user && loading) {
+        setLoadTimeout(true)
+      }
+    }, 5000) // 5 segundos timeout
+
+    return () => clearTimeout(timer)
+  }, [user, loading])
+
+  // Si hay timeout o no hay usuario después de cargar, redirigir al login
+  useEffect(() => {
+    if (loadTimeout && !user) {
+      router.push('/login')
+    }
+  }, [loadTimeout, user, router])
+
   if (!user || !profile) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f4f8' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f4f8', flexDirection: 'column', gap: '16px' }}>
         <div style={{ width: 40, height: 40, border: '3px solid #e2edfc', borderTop: '3px solid #1a73e8', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+        <p style={{ color: '#5f7f9e', fontSize: '0.875rem' }}>
+          {loadTimeout ? 'Redirigiendo al login...' : 'Cargando...'}
+        </p>
       </div>
     )
   }
