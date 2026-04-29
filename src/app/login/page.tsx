@@ -12,7 +12,7 @@ export default function LoginPage() {
   const { user } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
 
   const { profile } = useAuth()
@@ -46,7 +46,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    setLoading(true)
+    setIsSubmitting(true)
 
     try {
       await signIn(email, password)
@@ -59,7 +59,7 @@ export default function LoginPage() {
           // Cerrar sesión si el padre está inactivo
           await signOut()
           setError('Tu cuenta ha sido desactivada. Contacta al administrador.')
-          setLoading(false)
+          setIsSubmitting(false)
           return
         }
       }
@@ -68,32 +68,8 @@ export default function LoginPage() {
     } catch (err: any) {
       setError(err.message || 'Error en la autenticación')
     } finally {
-      setLoading(false)
+      setIsSubmitting(false)
     }
-  }
-
-  if (loading) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #e8f0fe 0%, #d4e4fc 100%)'
-      }}>
-        <div style={{ 
-          background: 'white', 
-          borderRadius: '48px', 
-          padding: '40px 32px',
-          boxShadow: '0 25px 45px -12px rgba(0, 0, 0, 0.2)'
-        }}>
-          <div style={{ textAlign: 'center' }}>
-            <i className="fas fa-spinner fa-pulse" style={{ fontSize: '32px', color: '#1a73e8' }}></i>
-            <p style={{ marginTop: '16px', color: '#5f7f9e' }}>Cargando...</p>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -262,7 +238,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={isSubmitting}
               style={{
                 width: '100%',
                 background: '#1a73e8',
@@ -282,10 +258,10 @@ export default function LoginPage() {
                 marginTop: '8px',
                 marginBottom: '20px',
                 boxShadow: '0 4px 12px rgba(26,115,232,0.25)',
-                opacity: loading ? 0.7 : 1
+                opacity: isSubmitting ? 0.7 : 1
               }}
             >
-              {loading ? (
+              {isSubmitting ? (
                 <>
                   <i className="fas fa-spinner fa-pulse"></i>
                   Ingresando...
