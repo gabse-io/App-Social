@@ -6,17 +6,26 @@ import { useAuth } from '@/components/providers'
 import { signIn, isParentActive, signOut, getCurrentProfile } from '@/lib/auth'
 import { Footer } from '@/components/footer'
 
-// Component that uses useSearchParams - must be wrapped in Suspense
-function ErrorMessage() {
-  const searchParams = useSearchParams()
+// Hook to safely read URL params on client only
+function useClientErrorParam() {
   const [message, setMessage] = useState('')
+  const searchParams = useSearchParams()
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     const errorParam = searchParams.get('error')
     if (errorParam === 'inactive') {
       setMessage('Tu cuenta ha sido desactivada. Contacta al administrador.')
     }
   }, [searchParams])
+
+  return mounted ? message : ''
+}
+
+// Component that uses useSearchParams - must be wrapped in a Suspense boundary
+function ErrorBanner() {
+  const message = useClientErrorParam()
 
   if (!message) return null
 
@@ -36,31 +45,6 @@ function ErrorMessage() {
     }}>
       <i className="fas fa-exclamation-circle"></i>
       <span>{message}</span>
-    </div>
-  )
-}
-
-// Loading fallback for Suspense
-function LoginLoading() {
-  return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #e8f0fe 0%, #d4e4fc 100%)'
-    }}>
-      <div style={{ 
-        background: 'white', 
-        borderRadius: '48px', 
-        padding: '40px 32px',
-        boxShadow: '0 25px 45px -12px rgba(0, 0, 0, 0.2)'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <i className="fas fa-spinner fa-pulse" style={{ fontSize: '32px', color: '#1a73e8' }}></i>
-          <p style={{ marginTop: '16px', color: '#5f7f9e' }}>Cargando...</p>
-        </div>
-      </div>
     </div>
   )
 }
@@ -197,8 +181,8 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <Suspense fallback={<div style={{ minHeight: '0px' }}></div>}>
-            <ErrorMessage />
+          <Suspense fallback={<div style={{ display: 'none' }}></div>}>
+            <ErrorBanner />
           </Suspense>
 
           {formError && (
