@@ -1,9 +1,49 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-// Singleton instance for client-side
-let supabaseClient: SupabaseClient | null = null
+// Client singleton - only initialized on browser
+let clientInstance: SupabaseClient | null = null
 
-function createSupabaseClient(): SupabaseClient {
+function getClient(): SupabaseClient {
+  if (typeof window === 'undefined') {
+    throw new Error('Supabase client can only be used in browser')
+  }
+  
+  if (!clientInstance) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    
+    if (!url || !key) {
+      throw new Error('Missing Supabase environment variables')
+    }
+    
+    clientInstance = createClient(url, key, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storageKey: 'sb-auth-token',
+        flowType: 'pkce'
+      }
+    })
+  }
+  
+  return clientInstance
+}
+
+// Export a stable reference that lazily initializes
+export const supabase = {
+  get auth() { return getClient().auth },
+  get from() { return getClient().from.bind(getClient()) },
+  get rpc() { return getClient().rpc.bind(getClient()) },
+  get storage() { return getClient().storage },
+  get realtime() { return getClient().realtime },
+  get channel() { return getClient().channel.bind(getClient()) },
+  get removeChannel() { return getClient().removeChannel.bind(getClient()) },
+  get removeAllChannels() { return getClient().removeAllChannels.bind(getClient()) },
+}
+
+// For server-side usage (API routes)
+export function createServerClient(): SupabaseClient {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   
@@ -13,43 +53,8 @@ function createSupabaseClient(): SupabaseClient {
   
   return createClient(url, key, {
     auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: false
+      persistSession: false,
+      autoRefreshToken: false
     }
   })
 }
-
-export function getSupabaseClient(): SupabaseClient {
-  // Always return singleton on client-side
-  if (typeof window !== 'undefined') {
-    if (!supabaseClient) {
-      supabaseClient = createSupabaseClient()
-    }
-    return supabaseClient
-  }
-  
-  // Server-side: create new instance each time
-  return createSupabaseClient()
-}
-
-// Create singleton for direct export (client-side only)
-function getSingletonClient(): SupabaseClient {
-  if (typeof window === 'undefined') {
-    // Server-side: throw error if accessed directly
-    throw new Error('Cannot access supabase singleton on server side. Use getSupabaseClient() instead.')
-  }
-  
-  if (!supabaseClient) {
-    supabaseClient = createSupabaseClient()
-  }
-  return supabaseClient
-}
-
-// Export singleton with lazy initialization
-export const supabase = new Proxy({} as SupabaseClient, {
-  get(_, prop) {
-    const client = getSingletonClient()
-    return (client as any)[prop]
-  }
-})
