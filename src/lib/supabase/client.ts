@@ -30,17 +30,17 @@ function getClient(): SupabaseClient {
   return clientInstance
 }
 
-// Export a stable reference that lazily initializes
-export const supabase = {
-  get auth() { return getClient().auth },
-  get from() { return getClient().from.bind(getClient()) },
-  get rpc() { return getClient().rpc.bind(getClient()) },
-  get storage() { return getClient().storage },
-  get realtime() { return getClient().realtime },
-  get channel() { return getClient().channel.bind(getClient()) },
-  get removeChannel() { return getClient().removeChannel.bind(getClient()) },
-  get removeAllChannels() { return getClient().removeAllChannels.bind(getClient()) },
-}
+// Export stable singleton - direct reference
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_, prop: string | symbol) {
+    const client = getClient()
+    const value = (client as any)[prop]
+    if (typeof value === 'function') {
+      return value.bind(client)
+    }
+    return value
+  }
+})
 
 // For server-side usage (API routes)
 export function createServerClient(): SupabaseClient {
