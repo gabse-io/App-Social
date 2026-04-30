@@ -62,13 +62,19 @@ export function ParentLayout({ children }: ParentLayoutProps) {
     }
   }, [profile, user, router, signOut])
 
-  // Timeout de seguridad
+  // Timeout de seguridad con flag de montaje
   useEffect(() => {
+    let isMounted = true
     const timer = setTimeout(() => {
-      setIsChecking(false)
-    }, 5000)
-    return () => clearTimeout(timer)
-  }, [])
+      if (isMounted) {
+        setIsChecking(false)
+      }
+    }, 6000)
+    return () => {
+      isMounted = false
+      clearTimeout(timer)
+    }
+  }, [user, profile])
 
   if (!user || !profile || isChecking) {
     return (

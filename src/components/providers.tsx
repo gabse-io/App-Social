@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { User } from '@supabase/supabase-js'
+import { User, AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
 import { Profile } from '@/types'
 
@@ -21,20 +21,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Flag para tracking de montaje
     let isMounted = true
     let subscription: { unsubscribe: () => void } | null = null
+    let isInitialized = false
 
     // Timeout safety - ensure loading always ends
     const timeoutId = setTimeout(() => {
-      if (isMounted) setLoading(false)
-    }, 10000)
+      if (isMounted && !isInitialized) {
+        console.warn('Auth initialization timeout')
+        setLoading(false)
+      }
+    }, 8000)
 
     const initAuth = async () => {
       try {
-        // Primero configurar el listener para evitar race condition
-        const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        // Secuencia: 1) Configurar listener primero
+        const { data } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
           if (!isMounted) return
-          setUser(session?.user ?? null)
+          
+          // Solo actualizar si hay cambio real
+          setUser(prev => {
+            if (prev?.id === session?.user?.id) return prev
+            return session?.user ?? null
+          })
+          
           if (session?.user) {
             await fetchProfile(session.user.id)
           } else {
@@ -44,19 +55,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         })
         subscription = data.subscription
 
-        // Pequeño delay para evitar conflicto de locks con onAuthStateChange
-        await new Promise(r => setTimeout(r, 100))
+        // Secuencia: 2) Esperar a que cualquier operación pendiente termine
+        await new Promise(r => setTimeout(r, 150))
         
         if (!isMounted) return
 
-        // Ahora obtener la sesión inicial
+        // Secuencia: 3) Obtener sesión inicial (ahora es seguro)
         const { data: { session }, error } = await supabase.auth.getSession()
         
         if (!isMounted) return
+        isInitialized = true
         
         if (error) {
           console.error('Error getting session:', error)
         }
+        
         setUser(session?.user ?? null)
         if (session?.user) {
           await fetchProfile(session.user.id)
@@ -69,12 +82,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    initAuth()
+    // Iniciar solo si estamos en el cliente
+    if (typeof window !== 'undefined') {
+      initAuth()
+    } else {
+      setLoading(false)
+    }
 
     return () => {
       isMounted = false
       clearTimeout(timeoutId)
-      subscription?.unsubscribe()
+      // Cleanup con delay para evitar conflictos con operaciones pendientes
+      setTimeout(() => {
+        subscription?.unsubscribe()
+      }, 100)
     }
   }, [])
 
