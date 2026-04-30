@@ -21,24 +21,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    console.log('[Auth] Initializing auth...')
+    
     // Timeout safety - ensure loading always ends
     const timeoutId = setTimeout(() => {
+      console.log('[Auth] Timeout reached, forcing loading=false')
       setLoading(false)
     }, 10000) // 10 segundos máximo
 
     // Get initial session
+    console.log('[Auth] Calling getSession...')
     supabase.auth.getSession().then(({ data: { session }, error }) => {
+      console.log('[Auth] getSession result:', { hasSession: !!session, error: error?.message })
       if (error) {
-        console.error('Error getting session:', error)
+        console.error('[Auth] Error getting session:', error)
       }
       setUser(session?.user ?? null)
       if (session?.user) {
+        console.log('[Auth] User found, fetching profile...')
         fetchProfile(session.user.id)
       } else {
+        console.log('[Auth] No session, setting loading=false')
         setLoading(false)
       }
     }).catch((err) => {
-      console.error('Failed to get session:', err)
+      console.error('[Auth] Failed to get session:', err)
       setLoading(false)
     })
 

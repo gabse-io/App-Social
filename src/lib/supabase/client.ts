@@ -30,17 +30,20 @@ function getClient(): SupabaseClient {
   return clientInstance
 }
 
-// Export stable singleton - direct reference
-export const supabase = new Proxy({} as SupabaseClient, {
-  get(_, prop: string | symbol) {
-    const client = getClient()
-    const value = (client as any)[prop]
-    if (typeof value === 'function') {
-      return value.bind(client)
-    }
-    return value
-  }
-})
+// Export getter function instead of Proxy for better mobile compatibility
+export function getSupabaseClient(): SupabaseClient {
+  return getClient()
+}
+
+// For backward compatibility - direct lazy export
+export const supabase = {
+  get auth() { return getClient().auth },
+  get from() { return getClient().from.bind(getClient()) },
+  get rpc() { return getClient().rpc.bind(getClient()) },
+  get storage() { return getClient().storage },
+  get channel() { return getClient().channel.bind(getClient()) },
+  get removeChannel() { return getClient().removeChannel.bind(getClient()) },
+}
 
 // For server-side usage (API routes)
 export function createServerClient(): SupabaseClient {
