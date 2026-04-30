@@ -21,43 +21,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let isMounted = true
+    let subscription: { unsubscribe: () => void } | null = null
+
     // Timeout safety - ensure loading always ends
     const timeoutId = setTimeout(() => {
-      setLoading(false)
-    }, 10000) // 10 segundos máximo
+      if (isMounted) setLoading(false)
+    }, 10000)
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        console.error('Error getting session:', error)
-      }
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchProfile(session.user.id)
-      } else {
-        setLoading(false)
-      }
-    }).catch((err) => {
-      console.error('Failed to get session:', err)
-      setLoading(false)
-    })
+    const initAuth = async () => {
+      try {
+        // Primero configurar el listener para evitar race condition
+        const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
+          if (!isMounted) return
+          setUser(session?.user ?? null)
+          if (session?.user) {
+            await fetchProfile(session.user.id)
+          } else {
+            setProfile(null)
+            setLoading(false)
+          }
+        })
+        subscription = data.subscription
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        await fetchProfile(session.user.id)
-      } else {
-        setProfile(null)
-        setLoading(false)
+        // Pequeño delay para evitar conflicto de locks con onAuthStateChange
+        await new Promise(r => setTimeout(r, 100))
+        
+        if (!isMounted) return
+
+        // Ahora obtener la sesión inicial
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (!isMounted) return
+        
+        if (error) {
+          console.error('Error getting session:', error)
+        }
+        setUser(session?.user ?? null)
+        if (session?.user) {
+          await fetchProfile(session.user.id)
+        } else {
+          setLoading(false)
+        }
+      } catch (err) {
+        console.error('Failed to get session:', err)
+        if (isMounted) setLoading(false)
       }
-    })
+    }
+
+    initAuth()
 
     return () => {
+      isMounted = false
       clearTimeout(timeoutId)
-      subscription.unsubscribe()
+      subscription?.unsubscribe()
     }
   }, [])
 
