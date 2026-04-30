@@ -1,49 +1,51 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-// Client singleton - only initialized on browser
+// Client singleton - initialized once on browser
 let clientInstance: SupabaseClient | null = null
 
-function getClient(): SupabaseClient {
-  if (typeof window === 'undefined') {
-    throw new Error('Supabase client can only be used in browser')
-  }
+// Initialize immediately if in browser
+if (typeof window !== 'undefined') {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   
-  if (!clientInstance) {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    
-    if (!url || !key) {
-      throw new Error('Missing Supabase environment variables')
-    }
-    
+  if (url && key) {
     clientInstance = createClient(url, key, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true,
+        detectSessionInUrl: false, // Disable to avoid lock issues on reload
         storageKey: 'sb-auth-token',
-        flowType: 'pkce'
+        flowType: 'pkce',
+        storage: {
+          getItem: (key) => {
+            try {
+              return Promise.resolve(localStorage.getItem(key))
+            } catch {
+              return Promise.resolve(null)
+            }
+          },
+          setItem: (key, value) => {
+            try {
+              localStorage.setItem(key, value)
+            } catch {}
+            return Promise.resolve()
+          },
+          removeItem: (key) => {
+            try {
+              localStorage.removeItem(key)
+            } catch {}
+            return Promise.resolve()
+          },
+        }
       }
     })
   }
-  
-  return clientInstance
 }
 
-// Export getter function instead of Proxy for better mobile compatibility
-export function getSupabaseClient(): SupabaseClient {
-  return getClient()
-}
-
-// For backward compatibility - direct lazy export
-export const supabase = {
-  get auth() { return getClient().auth },
-  get from() { return getClient().from.bind(getClient()) },
-  get rpc() { return getClient().rpc.bind(getClient()) },
-  get storage() { return getClient().storage },
-  get channel() { return getClient().channel.bind(getClient()) },
-  get removeChannel() { return getClient().removeChannel.bind(getClient()) },
-}
+// Export the client instance (or throw error if not initialized)
+export const supabase: SupabaseClient = clientInstance ?? (() => {
+  throw new Error('Supabase client not initialized - missing env vars or not in browser')
+})()
 
 // For server-side usage (API routes)
 export function createServerClient(): SupabaseClient {

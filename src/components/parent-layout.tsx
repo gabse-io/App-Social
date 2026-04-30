@@ -56,8 +56,19 @@ export function ParentLayout({ children }: ParentLayoutProps) {
     if (profile) {
       checkParentStatus()
       checkIfAdmin()
+    } else if (!user) {
+      // No hay usuario, dejar de chequear
+      setIsChecking(false)
     }
-  }, [profile, router, signOut])
+  }, [profile, user, router, signOut])
+
+  // Timeout de seguridad
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsChecking(false)
+    }, 5000)
+    return () => clearTimeout(timer)
+  }, [])
 
   if (!user || !profile || isChecking) {
     return (
