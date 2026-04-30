@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { User, AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
 import { Profile } from '@/types'
@@ -20,86 +20,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // SSR safety: immediately set loading to false on server
+  const [isClient, setIsClient] = useState(false)
+  
   useEffect(() => {
-    // Flag para tracking de montaje
-    let isMounted = true
-    let subscription: { unsubscribe: () => void } | null = null
-    let isInitialized = false
-
-    // Timeout safety - ensure loading always ends
-    const timeoutId = setTimeout(() => {
-      if (isMounted && !isInitialized) {
-        console.warn('Auth initialization timeout')
-        setLoading(false)
-      }
-    }, 8000)
-
-    const initAuth = async () => {
-      try {
-        // Secuencia: 1) Configurar listener primero
-        const { data } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
-          if (!isMounted) return
-          
-          // Solo actualizar si hay cambio real
-          setUser(prev => {
-            if (prev?.id === session?.user?.id) return prev
-            return session?.user ?? null
-          })
-          
-          if (session?.user) {
-            await fetchProfile(session.user.id)
-          } else {
-            setProfile(null)
-            setLoading(false)
-          }
-        })
-        subscription = data.subscription
-
-        // Secuencia: 2) Esperar a que cualquier operación pendiente termine
-        await new Promise(r => setTimeout(r, 150))
-        
-        if (!isMounted) return
-
-        // Secuencia: 3) Obtener sesión inicial (ahora es seguro)
-        const { data: { session }, error } = await supabase.auth.getSession()
-        
-        if (!isMounted) return
-        isInitialized = true
-        
-        if (error) {
-          console.error('Error getting session:', error)
-        }
-        
-        setUser(session?.user ?? null)
-        if (session?.user) {
-          await fetchProfile(session.user.id)
-        } else {
-          setLoading(false)
-        }
-      } catch (err) {
-        console.error('Failed to get session:', err)
-        if (isMounted) setLoading(false)
-      }
-    }
-
-    // Iniciar solo si estamos en el cliente
-    if (typeof window !== 'undefined') {
-      initAuth()
-    } else {
-      setLoading(false)
-    }
-
-    return () => {
-      isMounted = false
-      clearTimeout(timeoutId)
-      // Cleanup con delay para evitar conflictos con operaciones pendientes
-      setTimeout(() => {
-        subscription?.unsubscribe()
-      }, 100)
-    }
+    setIsClient(true)
   }, [])
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = useCallback(async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -111,29 +39,105 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Error fetching profile:', error)
       } else {
         setProfile(data)
-        if (!data) {
-          console.log('No profile found for user:', userId)
-        }
       }
     } catch (error) {
       console.error('Error fetching profile:', error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const refreshProfile = async () => {
+  useEffect(() => {
+    if (!isClient) return
+    
+    let isMounted = true
+    let subscription: { unsubscribe: () => void } | null = null
+
+    // Safety timeout - always clear loading state
+    const timeoutId = setTimeout(() => {
+      if (isMounted) {
+        console.warn('Auth safety timeout - forcing loading to false')
+        setLoading(false)
+      }
+    }, 5000)
+
+    const initAuth = async () => {
+      try {
+        // Setup auth state listener first
+        const { data } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
+          if (!isMounted) return
+          
+          const newUser = session?.user ?? null
+          setUser(prev => {
+            if (prev?.id === newUser?.id) return prev
+            return newUser
+          })
+          
+          if (newUser) {
+            // Use setTimeout to avoid calling supabase during the callback
+            setTimeout(() => {
+              if (isMounted) fetchProfile(newUser.id)
+            }, 0)
+          } else {
+            setProfile(null)
+            setLoading(false)
+          }
+        })
+        subscription = data.subscription
+
+        // Get initial session
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (!isMounted) return
+        
+        if (error) {
+          console.error('Error getting session:', error)
+          setLoading(false)
+          return
+        }
+        
+        const initialUser = session?.user ?? null
+        setUser(initialUser)
+        
+        if (initialUser) {
+          await fetchProfile(initialUser.id)
+        } else {
+          setLoading(false)
+        }
+      } catch (err) {
+        console.error('Failed to get session:', err)
+        if (isMounted) setLoading(false)
+      }
+    }
+
+    initAuth()
+
+    return () => {
+      isMounted = false
+      clearTimeout(timeoutId)
+      subscription?.unsubscribe()
+    }
+  }, [isClient, fetchProfile])
+
+
+  const refreshProfile = useCallback(async () => {
     if (user) {
       await fetchProfile(user.id)
     }
-  }
+  }, [user, fetchProfile])
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     await supabase.auth.signOut()
-  }
+  }, [])
+
+  // During SSR, render with loading=false to avoid hydration issues
+  // The client will immediately take over and initialize properly
+  const value = isClient 
+    ? { user, profile, loading, signOut, refreshProfile }
+    : { user: null, profile: null, loading: false, signOut: async () => {}, refreshProfile: async () => {} }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signOut, refreshProfile }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   )
