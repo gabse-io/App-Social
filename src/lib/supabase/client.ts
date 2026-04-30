@@ -1,19 +1,26 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-// Client singleton - initialized once on browser
+// Client singleton - only initialized on browser
 let clientInstance: SupabaseClient | null = null
 
-// Initialize immediately if in browser
-if (typeof window !== 'undefined') {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+function getClient(): SupabaseClient {
+  if (typeof window === 'undefined') {
+    throw new Error('Supabase client can only be used in browser')
+  }
   
-  if (url && key) {
+  if (!clientInstance) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    
+    if (!url || !key) {
+      throw new Error('Missing Supabase environment variables')
+    }
+    
     clientInstance = createClient(url, key, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: false, // Disable to avoid lock issues on reload
+        detectSessionInUrl: false,
         storageKey: 'sb-auth-token',
         flowType: 'pkce',
         storage: {
@@ -40,12 +47,21 @@ if (typeof window !== 'undefined') {
       }
     })
   }
+  
+  return clientInstance
 }
 
-// Export the client instance (or throw error if not initialized)
-export const supabase: SupabaseClient = clientInstance ?? (() => {
-  throw new Error('Supabase client not initialized - missing env vars or not in browser')
-})()
+// Export a stable reference that lazily initializes
+export const supabase = {
+  get auth() { return getClient().auth },
+  get from() { return getClient().from.bind(getClient()) },
+  get rpc() { return getClient().rpc.bind(getClient()) },
+  get storage() { return getClient().storage },
+  get realtime() { return getClient().realtime },
+  get channel() { return getClient().channel.bind(getClient()) },
+  get removeChannel() { return getClient().removeChannel.bind(getClient()) },
+  get removeAllChannels() { return getClient().removeAllChannels.bind(getClient()) },
+}
 
 // For server-side usage (API routes)
 export function createServerClient(): SupabaseClient {
